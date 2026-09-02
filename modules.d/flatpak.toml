@@ -1,0 +1,5 @@
+name = "flatpak"
+description = "upadates ur flatpaksss"
+context = "user"
+program = "flatpak"
+args = [ "update", "-y" ]

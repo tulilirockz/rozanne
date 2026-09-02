@@ -1,0 +1,9 @@
+name = "system-update"
+description = "upadates ur bootcs or rpm-ostrees"
+context = "system"
+program = "bootc"
+args = [ "update" ] 
+# program = "./system-update-chungus"
+# check_program = "./system-update-can-i-run"
+# notify_failure = true
+
