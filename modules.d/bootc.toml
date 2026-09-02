@@ -1,0 +1,5 @@
+name = "bootc"
+description = "upadates ur bootcs"
+context = "system"
+program = "bootc"
+args = [ "upgrade" ]
