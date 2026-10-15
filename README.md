@@ -1,4 +1,10 @@
-# Rozanne
+<div align="center">
+    <img width="120" height="106" alt="rozanne" src="https://github.com/user-attachments/assets/1c740fb6-5e78-448a-a578-5734a9dc60fd" />
+    <br/>
+    <h1>Rozanne</h1>
+</div>
+<br/>
+
 
 README WIP :3
 
