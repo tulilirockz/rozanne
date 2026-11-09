@@ -22,7 +22,6 @@ struct Module {
     description: Option<String>,
     program: String,
     context: ExecutionContext,
-    run_in_unit: Option<bool>,
     args: Option<Vec<String>>,
 }
 
