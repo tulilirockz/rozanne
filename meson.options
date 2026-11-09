@@ -1,0 +1,35 @@
+# This is so we can skip the Rust build in the RPM spec and invoke Cargo separately.
+option(
+  'cargo_build',
+  type: 'feature',
+  description: 'enable building Rust binaries using Cargo',
+  value: 'enabled',
+)
+
+option(
+  'polkit_rules_dir',
+  type: 'string',
+  description: 'directory for polkit rules files [$datadir/polkit-1/rules.d]',
+  value: '',
+)
+
+option(
+  'polkit_policy_dir',
+  type: 'string',
+  description: 'directory for polkit policy files [$datadir/polkit-1/actions]',
+  value: '',
+)
+
+option(
+  'systemdsystemunitdir',
+  type: 'string',
+  description: 'directory for systemd system service files',
+  value: '',
+)
+
+option(
+  'systemduserunitdir',
+  type: 'string',
+  description: 'directory for systemd user service files',
+  value: '',
+)

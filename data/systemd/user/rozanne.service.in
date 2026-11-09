@@ -1,0 +1,11 @@
+[Unit]
+Description=Rozanne Updater Oneshot Service (user session)
+StartLimitBurst=3
+StartLimitIntervalSec=600
+
+[Service]
+Type=oneshot
+ExecStart=@bindir@/rozanne
+# Restart on failure for edge cases like waking from suspend and wifi not connecting immediately
+Restart=on-failure
+RestartSec=60s
