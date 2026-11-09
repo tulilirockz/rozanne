@@ -5,24 +5,38 @@
 </div>
 <br/>
 
+Modular updater tool for operating systems
 
-README WIP :3
+## Installation
 
+Not yet packaged anywhere, will be on Terra at some point
 
-`$XDG_CONFIG_HOME/chungusamogus/config.toml`
-```toml
-enabled_modules = ["flatpak"]
-```
+## Utilization
 
-then  you'd have like `/usr/share/chungusupdate/modules.d/flaptak.toml`
-```toml
-[module]
-name=flatpak
-commands="amogus balls flatpak update idk"
-descriptions="uipdates ur flatpaksses"
+Rozanne is composed of two services that do privileged/unprivileged updates respectively
 
 ```
+systemctl enable --now rozanne
+systemctl enable --now --user rozanne
+```
 
+Those would run all of the updates related to their privilege level, root user run `system` modules, other users run the `user` level.
 
-- Have some option for `--only` whatever for specific modules
-- Have a notify option for general modules
+Module definitions have the following shape:
+```toml
+name = "flatpak"
+descriptions = "Updates flatpaks"
+context = "user" # This will run for any user that rozanne is running as, not any target user
+program = "flatpak"
+args = ["update", "--yes", "--user"]
+```
+
+These follow the XDG standard paths for where they can be written to, `/usr/share/rozanne/modules.d`, `/etc/rozanne/modules.d`, `$HOME/.config/rozanne/modules.d` and `$XDG_CONFIG_PATH/rozanne/modules.d`, same with the `config.toml` file,which can be defined similarly to this:
+```toml
+# These two are self-exclusionary
+enabled_modules = ["flatpak"] # Allowlist pattern
+disabled_modules = [ "bootc" ] # Denylist pattern
+log_level = "debug" # Follows `RUST_LOG` log levels from `log` + `env_log` crates. (https://docs.rs/log/latest/log/enum.Level.html)
+```
+
+Rozanne will then run every module enabled in alphabetical sequence.
