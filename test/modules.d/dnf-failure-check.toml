@@ -1,0 +1,10 @@
+[main]
+name = "dnf-failure-check"
+description = "updates system using dnf"
+context = "system"
+program = "dnf"
+args = [ "update", "-y" ] 
+
+[check]
+program = "stat"
+args = [ "/usr/lib/sysimage/libdnf5failure" ] 

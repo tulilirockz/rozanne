@@ -44,7 +44,7 @@ program = "/usr/libexec/flatpak-checker" # A program that will check if the modu
 These follow the XDG standard paths for where they can be written to, `/usr/share/rozanne/modules.d`, `/etc/rozanne/modules.d`, `$HOME/.config/rozanne/modules.d` and `$XDG_CONFIG_PATH/rozanne/modules.d`, same with the `config.toml` file, which can be defined similarly to this:
 ```toml
 # These two are self-exclusionary
-enabled_modules = ["flatpak"] # Allowlist pattern
+enabled_modules = [ "flatpak" ] # Allowlist pattern
 disabled_modules = [ "bootc" ] # Denylist pattern
 log_level = "debug" # Follows `RUST_LOG` log levels from `log` + `env_log` crates. (https://docs.rs/log/latest/log/enum.Level.html)
 verbose_notifications = false # Allows every module to notify failures 
@@ -54,5 +54,3 @@ ignore_failures = [ "brew" ] # Modules to ignore failures on (no notifications, 
 ```
 
 Rozanne will then run every module enabled in alphabetical sequence.
-
-Need a blogpost :3

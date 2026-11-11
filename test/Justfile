@@ -1,0 +1,13 @@
+
+build-static:
+    mkdir -p cache
+    podman run --rm -it -e CFLAGS="-static" -e RUSTFLAGS="-C target-feature=+crt-static" -v ..:/src:Z,ro -v ./cache:/root:Z,rw alpine:latest sh -xc "apk add rustup gcc musl-dev && rustup-init --yes --target $(arch)-unknown-linux-musl && cp /src /tmp -r && cd /tmp/src && /root/.cargo/bin/cargo build --release --target=$(arch)-unknown-linux-musl && cp /tmp/src/target/$(arch)-unknown-linux-musl/release/rozanne /root"
+
+quick-test:
+    #!/usr/bin/env bash
+    set -xeuo pipefail
+    mkdir -p build
+    podman run --rm -it -e RUST_LOG=debug -v ./modules.d/dnf-container-test.toml:/tmp/dnf-container-test.toml:Z,ro -v ./cache:/app:Z,ro registry.fedoraproject.org/fedora:rawhide /app/rozanne --context system /tmp
+    podman run --rm -it -e RUST_LOG=debug -v ./apt-update-script:/usr/bin/apt-update-script:Z,ro -v ./modules.d/apt-container-test.toml:/tmp/apt-container-test.toml:Z,ro -v ./cache:/app:Z,ro docker.io/library/debian:latest /app/rozanne --context system /tmp
+    podman run --rm -it -e RUST_LOG=debug -v ./apk-update-script:/usr/bin/apk-update-script:Z,ro -v ./modules.d/apk-container-test.toml:/tmp/apk-container-test.toml:Z,ro -v ./cache:/app:Z,ro docker.io/library/alpine:latest /app/rozanne --context system /tmp
+

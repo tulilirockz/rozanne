@@ -2,3 +2,4 @@
 *.raw
 _build
 build
+cache/

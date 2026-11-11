@@ -1,0 +1,10 @@
+[main]
+name = "exit failure notify"
+description = "test for checking if right codepaths are found on notify failure"
+context = "user"
+program = "exit"
+args = [ "1" ] 
+
+[notify]
+program = "exit"
+args = [ "1" ] 

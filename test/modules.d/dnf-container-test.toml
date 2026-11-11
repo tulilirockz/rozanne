@@ -1,0 +1,14 @@
+[main]
+name = "dnf-container-test"
+description = "updates system using dnf"
+context = "system"
+program = "dnf"
+args = [ "update", "-y" ] 
+
+[check]
+program = "stat"
+args = [ "/usr/lib/sysimage/libdnf5" ] 
+
+[notify]
+program = "echo"
+args = [ "notify: im notifying things for DNF failure" ] 

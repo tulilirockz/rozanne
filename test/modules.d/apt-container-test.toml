@@ -1,0 +1,13 @@
+[main]
+name = "apt-container-test"
+description = "updates system using dnf"
+context = "system"
+program = "apt-update-script"
+
+[check]
+program = "stat"
+args = [ "/etc/apt" ] 
+
+[notify]
+program = "echo"
+args = [ "notify: im notifying things for apt failure" ] 

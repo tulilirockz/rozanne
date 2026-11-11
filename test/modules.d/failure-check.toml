@@ -1,0 +1,10 @@
+[main]
+name = "exit failure check"
+description = "test for checking if right codepaths are found on check failure"
+context = "user"
+program = "exit"
+args = [ "0" ] 
+
+[check]
+program = "exit"
+args = [ "1" ] 

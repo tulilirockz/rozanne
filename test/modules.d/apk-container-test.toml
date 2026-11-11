@@ -1,0 +1,13 @@
+[main]
+name = "apk-container-test"
+description = "updates system using apk"
+context = "system"
+program = "apk-update-script"
+
+[check]
+program = "stat"
+args = [ "/etc/apk" ] 
+
+[notify]
+program = "echo"
+args = [ "notify: im notifying things for apk failure" ] 
