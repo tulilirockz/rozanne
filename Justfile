@@ -4,16 +4,18 @@ just := just_executable()
 
 alias setup := setup-builddir
 
+iterate *ARGS: build
+    ./build/src/rozanne {{ARGS}}
+
 setup-builddir:
     #!/usr/bin/env bash
 
     meson setup --wipe {{build_dir}} --prefix {{install_prefix}}
 
-iterate:
-    meson setup --wipe {{build_dir}} --prefix {{install_prefix}}
-    meson compile -C {{build_dir}} --prefix {{install_prefix}}
+build: setup-builddir
+    meson compile -C {{build_dir}}
 
-sysext:
+sysext: build
     set -x
     DESTDIR=rozanne-sysext meson install -C {{build_dir}}
     sysextbuddy --name rozanne {{build_dir}}/rozanne-sysext/ -o {{build_dir}}/rozanne.raw

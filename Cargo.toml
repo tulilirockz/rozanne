@@ -1,7 +1,12 @@
 [package]
 name = "rozanne"
 version = "0.1.0"
+description = "Modular updater tool for operating systems"
 edition = "2024"
+repository = "https://github.com/tulilirockz/rozanne"
+license = "BSD-3-Clause"
+keywords = [ "cli", "automation" ]
+categories = [ "command-line-utilities", "os::linux-apis" ]
 
 [dependencies]
 clap = { version = "4.6.6", features = ["derive"] }
