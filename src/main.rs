@@ -65,7 +65,7 @@ struct Config {
     enabled_modules: Option<Vec<String>>,
     disabled_modules: Option<Vec<String>>,
     ignore_failures: Option<Vec<String>>,
-    verbose_notifications: bool,
+    verbose_notifications: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, clap::ValueEnum, Default, PartialEq)]
@@ -76,6 +76,7 @@ enum ExecutionContext {
     User,
 }
 
+// Guarantees non-zero-length vector as a return
 fn get_xdg_dirs(name: &str, extra_config_dir: Option<String>) -> Result<Vec<PathBuf>, ()> {
     let mut out: Vec<PathBuf> = vec![];
     
@@ -118,8 +119,14 @@ fn main() {
         return;
     };
 
-    let mut modules: Vec<Module> = vec![];
+    // FIXME: figure out a way of merging configs
+    if let Ok(config_files) = get_xdg_dirs("config.toml", parsed_cli.config) && let Ok(config_parsed) = toml::from_str::<Config>(&read_to_string(&config_files[0]).expect("Failure reading configuration file")) {
+        debug!("Configuration file was successfully parsed, utilizing config from {}", config_files[0].display());
+        config = config_parsed;
+    }
+    debug!("Running with config: {config:?}");
 
+    let mut modules: Vec<Module> = vec![];
     for modules_dir in modules_dirs {
         let mut modules_found: Vec<Module> = modules_dir
             .read_dir()
@@ -142,6 +149,13 @@ fn main() {
         modules.append(&mut modules_found);
     }
 
+    if let Some(enabled_modules_yeah) = config.enabled_modules {
+        modules = modules.iter().filter(|x| enabled_modules_yeah.contains(&x.main.name)).cloned().collect();
+    }
+
+    if let Some(disabled_modules_yeah) = config.disabled_modules {
+        modules = modules.iter().filter(|x| !disabled_modules_yeah.contains(&x.main.name)).cloned().collect();
+    }
 
     if modules.is_empty() {
         error!("No valid modules found for session type, exiting.");
@@ -154,6 +168,10 @@ fn main() {
     if has_duplicates(&module_names) {
         error!("Duplicate modules found, exiting.");
         return;
+    }
+
+    if let Some(verbose_notifs) = config.verbose_notifications && !verbose_notifs {
+        debug!("Verbose notifications are disabled. Not notifying on failure.");
     }
 
     for module in &modules {
@@ -184,7 +202,6 @@ fn main() {
                 }
                 info!("Successfully ran check for {}", copied_module.main.program);
             } else {
-                
                 error!("Check failed for module {}, skipping.", copied_module.main.program);
                 continue;
             }
@@ -206,6 +223,10 @@ fn main() {
             
             info!("Module {} properly executed.", copied_module.main.name);
         }  else {
+            if let Some(ignore_failure) = config.ignore_failures.clone() && ignore_failure.contains(&copied_module.main.name) {
+                debug!("Failure for module {} was ignored. Ignore failures is enabled.", copied_module.main.name);
+                continue;
+            }
             error!("Failure while running module {}", copied_module.main.name);
 
             if parsed_cli.context == ExecutionContext::System {
@@ -213,7 +234,7 @@ fn main() {
                 continue;
             }
 
-            if let Some(notify_module) = copied_module.notify {
+            if let Some(notify_module) = copied_module.notify && let Some(verbose_notifs) = config.verbose_notifications && verbose_notifs {
                 debug!(
                     "Showing failure notification for {}",
                     copied_module.main.name,
