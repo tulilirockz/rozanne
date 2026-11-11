@@ -46,7 +46,6 @@ These follow the XDG standard paths for where they can be written to, `/usr/shar
 # These two are self-exclusionary
 enabled_modules = [ "flatpak" ] # Allowlist pattern
 disabled_modules = [ "bootc" ] # Denylist pattern
-log_level = "debug" # Follows `RUST_LOG` log levels from `log` + `env_log` crates. (https://docs.rs/log/latest/log/enum.Level.html)
 verbose_notifications = false # Allows every module to notify failures 
 notify_on_failure = true # Displays a notification at the end of all modules that failed running
 notify_on_start = true # Displays a notification that updates are happening when this is enabled

@@ -1,5 +1,5 @@
 use std::{
-    collections::HashSet, fs::read_to_string, path::{Path, PathBuf}, process::Stdio,
+    collections::HashSet, fs::{read_dir, read_to_string}, path::{Path, PathBuf}, process::Stdio,
 };
 use log::{
     debug,
@@ -60,6 +60,14 @@ struct Cli {
     context: ExecutionContext,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+struct Config {
+    enabled_modules: Option<Vec<String>>,
+    disabled_modules: Option<Vec<String>>,
+    ignore_failures: Option<Vec<String>>,
+    verbose_notifications: bool,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, clap::ValueEnum, Default, PartialEq)]
 #[serde(rename_all = "snake_case")]
 enum ExecutionContext {
@@ -68,62 +76,77 @@ enum ExecutionContext {
     User,
 }
 
-#[derive(Debug, PartialEq)]
-enum Config {
-    NotFound,
-}
-
-// user_path -> $XDG_CONFIG_HOME/updater/modules.d (with fallback .config) -> /etc/updater/modules.d/ -> /usr/share/updater/modules.d
-fn get_modules_dir(extra_config_dir: Option<String>) -> Result<PathBuf, Config> {
+fn get_xdg_dirs(name: &str, extra_config_dir: Option<String>) -> Result<Vec<PathBuf>, ()> {
+    let mut out: Vec<PathBuf> = vec![];
+    
     if let Some(config_dir) = extra_config_dir {
         let extra_config_dir_path = Path::new(&config_dir);
         if extra_config_dir_path.exists() {
-            return Ok(extra_config_dir_path.to_path_buf());
+            out.push(extra_config_dir_path.to_path_buf());
         }
     }
 
-    let home_path = format!("{}/.config/rozanne/modules.d", std::env::var("HOME").unwrap());
+    let home_path = format!("{}/.config/rozanne/{}", std::env::var("HOME").unwrap_or_default(), name);
     let user_config_dir = Path::new(&home_path);
-
-    for path in [Path::new("/usr/share/rozanne/modules.d"),
-        Path::new("/etc/rozanne/modules.d"), user_config_dir] {
+    let usr_path = format!("/usr/share/rozanne/{name}"); 
+    let etc_path = format!("/etc/rozanne/{name}");
+ 
+    for path in [Path::new(&usr_path),
+        Path::new(&etc_path), user_config_dir] {
         if path.exists() {
-            return Ok(path.to_path_buf());
+            out.push(path.to_path_buf());
         }
     }
 
-    Err(Config::NotFound)
+    if out.is_empty() {
+        Err(())
+    } else {
+        Ok(out)
+    }
 }
 
 fn main() {
     let parsed_cli = Cli::parse();
+    let mut config = Config::default();
 
     env_logger::init();
 
     debug!("Session is being ran in {:?} context", parsed_cli.context);
 
-    let Ok(config_dir) = get_modules_dir(parsed_cli.modules_directory) else {
+    let Ok(modules_dirs) = get_xdg_dirs("modules.d", parsed_cli.modules_directory) else {
         error!("Failed finding any module directory");
         return;
     };
 
-    let modules: Vec<Module> = config_dir
-        .read_dir()
-        .expect("Failed reading modules directory")
-        .filter_map(std::result::Result::ok)
-        .filter(|file| {
-            if let Ok(entry) = file.file_type() {
-                return entry.is_file();
-            }
-            false
-        })
-        .map(|file| {
-            let unserialized = read_to_string(file.path()).expect("Failed reading module file");
+    let mut modules: Vec<Module> = vec![];
 
-            toml::from_str(&unserialized).expect("Failed parsing module file")
-        })
-        .filter(|f: &Module| f.main.context == parsed_cli.context)
-        .collect();
+    for modules_dir in modules_dirs {
+        let mut modules_found: Vec<Module> = modules_dir
+            .read_dir()
+            .expect("Failed reading modules directory")
+            .filter_map(std::result::Result::ok)
+            .filter(|file| {
+                if let Ok(entry) = file.file_type() {
+                    return entry.is_file();
+                }
+                false
+            })
+            .map(|file| {
+                let unserialized = read_to_string(file.path()).expect("Failed reading module file");
+
+                toml::from_str(&unserialized).expect("Failed parsing module file")
+            })
+            .filter(|f: &Module| f.main.context == parsed_cli.context)
+            .collect();
+
+        modules.append(&mut modules_found);
+    }
+
+
+    if modules.is_empty() {
+        error!("No valid modules found for session type, exiting.");
+        return;
+    }
 
     let module_names: Vec<String> = modules.iter().map(|module| module.main.name.clone()).collect();
     info!("Modules found and active for the session: {module_names:?}");
@@ -161,6 +184,7 @@ fn main() {
                 }
                 info!("Successfully ran check for {}", copied_module.main.program);
             } else {
+                
                 error!("Check failed for module {}, skipping.", copied_module.main.program);
                 continue;
             }
@@ -183,6 +207,11 @@ fn main() {
             info!("Module {} properly executed.", copied_module.main.name);
         }  else {
             error!("Failure while running module {}", copied_module.main.name);
+
+            if parsed_cli.context == ExecutionContext::System {
+                debug!("Execution context is system, skipping notification on module {}", copied_module.main.name);
+                continue;
+            }
 
             if let Some(notify_module) = copied_module.notify {
                 debug!(
@@ -207,7 +236,6 @@ fn main() {
             } else {
                 debug!("Notifications on failure for module {} are disabled, not notifying", copied_module.main.name);
             }
-
         }
     }
 
