@@ -1,0 +1,7 @@
+FROM quay.io/fedora/fedora-bootc:latest
+
+RUN useradd -m rozanne
+RUN usermod --password $(echo testvm | openssl passwd -1 -stdin) rozanne
+RUN usermod --password $(echo testvm | openssl passwd -1 -stdin) root
+RUN echo "PermitRootLogin yes" > /etc/ssh/sshd_config.d/root_login.conf
+RUN dnf install -y tmux # DELETEME-WITH-SED
